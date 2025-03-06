@@ -5,6 +5,8 @@ Strangeloop CLI - A recursive and self-referential AI agent framework.
 import click
 import sys
 import json
+import importlib
+import inspect
 from pathlib import Path
 from .llm import ask_claude
 from .config import get_config
@@ -74,6 +76,272 @@ def ask(question, max_tokens, temperature):
         click.echo(response)
     except Exception as e:
         click.echo(f"Error: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@cli.group()
+def capability():
+    """Manage strangeloop capabilities."""
+    pass
+
+
+@capability.command(name="add")
+@click.argument("description", required=True)
+@click.option("--max-tokens", "-m", default=4096, help="Maximum tokens in response")
+@click.option("--temperature", "-t", default=0.5, type=float, help="Temperature (0.0-1.0)")
+@click.option("--save/--no-save", "-s/-n", default=True, help="Save the function to a file (default: save)")
+def capability_add(description, max_tokens, temperature, save):
+    """
+    Add a new capability using Claude and dynamically add it to strangeloop.
+    
+    DESCRIPTION is a description of what the function should do.
+    """
+    try:
+        from .dynamic import add_function_to_module, save_function_to_file
+        import strangeloop
+        
+        # Prepare the prompt for Claude
+        prompt = f"""
+        Implement a Python function based on this capability description:
+        
+        {description}
+        
+        Requirements:
+        1. Write a single, well-documented Python function with clear docstrings
+        2. Include proper type hints
+        3. Include appropriate error handling
+        4. Make the function name descriptive of its purpose
+        5. Only return the function code, nothing else
+        """
+        
+        click.echo(f"Asking Claude to implement: {description}")
+        function_code = ask_claude(prompt, max_tokens, temperature)
+        
+        # Clean up the response if needed (remove markdown code blocks)
+        function_code = function_code.strip()
+        if function_code.startswith("```python"):
+            function_code = function_code[len("```python"):].strip()
+        if function_code.startswith("```"):
+            function_code = function_code[len("```"):].strip()
+        if function_code.endswith("```"):
+            function_code = function_code[:-len("```")].strip()
+        
+        # Display the generated function
+        click.echo("\nGenerated function:")
+        click.echo(function_code)
+        
+        # Add the function to the strangeloop module
+        try:
+            function = add_function_to_module("strangeloop", function_code)
+            function_name = function.__name__
+            click.echo(f"\nSuccessfully added function '{function_name}' to strangeloop")
+            
+            # Save the function to a file if requested
+            if save:
+                file_path = save_function_to_file(function_code)
+                click.echo(f"Saved function to {file_path}")
+                
+                # Add import to __init__.py to make it available in future sessions
+                capabilities_init = Path(__file__).parent / "capabilities" / "__init__.py"
+                with open(capabilities_init, "a") as f:
+                    f.write(f"\nfrom strangeloop.capabilities.{function_name} import {function_name}\n")
+                
+                click.echo(f"Added import to capabilities/__init__.py for future sessions")
+            
+            # Show usage example
+            click.echo("\nUsage example:")
+            click.echo(f"  from strangeloop import {function_name}")
+            click.echo(f"  help({function_name})  # View documentation")
+            click.echo(f"  # Or use the CLI:")
+            click.echo(f"  strangeloop capability run {function_name} [ARGS...]")
+            
+        except Exception as e:
+            click.echo(f"Error adding function to strangeloop: {str(e)}", err=True)
+            sys.exit(1)
+            
+    except Exception as e:
+        click.echo(f"Error implementing capability: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@capability.command(name="list")
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed information about each capability")
+def capability_list(verbose):
+    """List all available capabilities."""
+    try:
+        # Import capabilities module
+        try:
+            import strangeloop.capabilities as capabilities
+            importlib.reload(capabilities)  # Reload to catch any new capabilities
+        except ImportError:
+            click.echo("No capabilities found.")
+            return
+        
+        # Get all functions from the capabilities module
+        functions = []
+        for name in dir(capabilities):
+            if name.startswith('_'):
+                continue
+            
+            obj = getattr(capabilities, name)
+            if inspect.isfunction(obj):
+                functions.append((name, obj))
+        
+        if not functions:
+            click.echo("No capabilities found.")
+            return
+        
+        click.echo(f"Found {len(functions)} capabilities:")
+        for name, func in sorted(functions, key=lambda x: x[0]):
+            if verbose:
+                # Get the first line of the docstring
+                doc = inspect.getdoc(func) or "No documentation"
+                doc_first_line = doc.split('\n')[0]
+                
+                # Get the function signature
+                sig = str(inspect.signature(func))
+                
+                click.echo(f"\n{name}{sig}")
+                click.echo(f"  {doc_first_line}")
+                
+                # Show file location
+                try:
+                    file_path = inspect.getfile(func)
+                    click.echo(f"  Defined in: {file_path}")
+                except (TypeError, OSError):
+                    pass
+            else:
+                click.echo(f"- {name}")
+        
+        if not verbose:
+            click.echo("\nUse --verbose for more details.")
+            click.echo("Use 'strangeloop capability show <name>' to see full documentation.")
+    
+    except Exception as e:
+        click.echo(f"Error listing capabilities: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@capability.command(name="show")
+@click.argument("name", required=True)
+def capability_show(name):
+    """Show detailed information about a specific capability."""
+    try:
+        # Import capabilities module
+        try:
+            import strangeloop.capabilities as capabilities
+            importlib.reload(capabilities)  # Reload to catch any new capabilities
+        except ImportError:
+            click.echo("No capabilities found.")
+            return
+        
+        # Get the function
+        if not hasattr(capabilities, name):
+            click.echo(f"Capability '{name}' not found.")
+            return
+        
+        func = getattr(capabilities, name)
+        if not inspect.isfunction(func):
+            click.echo(f"'{name}' is not a function capability.")
+            return
+        
+        # Display function information
+        click.echo(f"Capability: {name}{inspect.signature(func)}")
+        
+        # Show docstring
+        doc = inspect.getdoc(func) or "No documentation"
+        click.echo("\nDocumentation:")
+        click.echo(doc)
+        
+        # Show source code
+        try:
+            source = inspect.getsource(func)
+            click.echo("\nSource Code:")
+            click.echo(source)
+        except (TypeError, OSError) as e:
+            click.echo(f"\nCould not retrieve source code: {str(e)}")
+        
+        # Show file location
+        try:
+            file_path = inspect.getfile(func)
+            click.echo(f"\nDefined in: {file_path}")
+        except (TypeError, OSError):
+            pass
+        
+        # Show usage example
+        click.echo("\nUsage example:")
+        click.echo(f"  from strangeloop import {name}")
+        click.echo(f"  result = {name}(...)")
+        click.echo(f"  # Or use the CLI:")
+        click.echo(f"  strangeloop capability run {name} [ARGS...]")
+    
+    except Exception as e:
+        click.echo(f"Error showing capability: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@capability.command(name="run")
+@click.argument("name", required=True)
+@click.argument("args", nargs=-1)
+@click.option("--json", "-j", is_flag=True, help="Parse arguments as JSON")
+def capability_run(name, args, json):
+    """
+    Run a capability with the given arguments.
+    
+    NAME is the name of the capability to run.
+    ARGS are the arguments to pass to the capability.
+    """
+    try:
+        # Import capabilities module
+        try:
+            import strangeloop.capabilities as capabilities
+            importlib.reload(capabilities)  # Reload to catch any new capabilities
+        except ImportError:
+            click.echo("No capabilities found.")
+            return
+        
+        # Get the function
+        if not hasattr(capabilities, name):
+            click.echo(f"Capability '{name}' not found.")
+            return
+        
+        func = getattr(capabilities, name)
+        if not inspect.isfunction(func):
+            click.echo(f"'{name}' is not a function capability.")
+            return
+        
+        # Parse arguments
+        parsed_args = []
+        parsed_kwargs = {}
+        
+        if json:
+            # Parse all arguments as JSON
+            import json as json_module
+            for arg in args:
+                try:
+                    parsed_args.append(json_module.loads(arg))
+                except json_module.JSONDecodeError:
+                    # If not valid JSON, use as string
+                    parsed_args.append(arg)
+        else:
+            # Simple string arguments
+            parsed_args = args
+        
+        # Run the function
+        click.echo(f"Running capability '{name}'...")
+        result = func(*parsed_args, **parsed_kwargs)
+        
+        # Display the result
+        click.echo("\nResult:")
+        if result is None:
+            click.echo("(No return value)")
+        elif isinstance(result, (dict, list)):
+            click.echo(json.dumps(result, indent=2))
+        else:
+            click.echo(result)
+    
+    except Exception as e:
+        click.echo(f"Error running capability: {str(e)}", err=True)
         sys.exit(1)
 
 
