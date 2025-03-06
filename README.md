@@ -31,6 +31,16 @@ uvx strangeloop process FILE_PATH [--output OUTPUT_PATH]
 # Ask Claude Sonnet 3.7 a question
 uvx strangeloop ask "What is recursive self-improvement in AI?"
 
+# Use the AI agent loop to fulfill requests
+uvx strangeloop do "find the current weather in New York"
+uvx strangeloop do "create a function to generate secure passwords"
+
+# Manage capabilities
+uvx strangeloop capability add "generate a secure random password"
+uvx strangeloop capability list
+uvx strangeloop capability show generate_secure_password
+uvx strangeloop capability run generate_secure_password 16 --include-special-chars
+
 # Configuration management
 uvx strangeloop config set anthropic_api_key "your-api-key"
 uvx strangeloop config get anthropic_api_key
@@ -47,6 +57,68 @@ strangeloop hello
 strangeloop greet [NAME]
 strangeloop info
 strangeloop ask "What is the meaning of life?" --max-tokens 2048 --temperature 0.8
+```
+
+## AI Agent Loop
+
+The core of Strangeloop is the AI agent loop, which allows you to make requests in natural language and have the system determine the best way to fulfill them:
+
+```bash
+strangeloop do "find information about the weather in Paris"
+```
+
+The system will:
+1. Analyze your request
+2. Check available capabilities
+3. Either:
+   - Use an existing capability
+   - Create a new capability
+   - Provide a direct response
+
+You can control the execution with options:
+```bash
+# Don't automatically execute the suggested action
+strangeloop do "analyze this log file" --no-auto-execute
+
+# Adjust the temperature for more creative responses
+strangeloop do "write a poem about AI" --temperature 0.9
+```
+
+## Capabilities Management
+
+Strangeloop allows you to create, manage, and execute capabilities - Python functions that can be dynamically added to the system:
+
+### Adding Capabilities
+
+```bash
+# Add a new capability
+strangeloop capability add "generate a secure random password"
+
+# Control the generation parameters
+strangeloop capability add "fetch current weather for a location" --temperature 0.5 --max-tokens 4096
+```
+
+### Listing and Viewing Capabilities
+
+```bash
+# List all available capabilities
+strangeloop capability list
+
+# Get detailed information about capabilities
+strangeloop capability list --verbose
+
+# Show details of a specific capability
+strangeloop capability show generate_secure_password
+```
+
+### Running Capabilities
+
+```bash
+# Run a capability with arguments
+strangeloop capability run generate_secure_password 16 true
+
+# Parse arguments as JSON
+strangeloop capability run fetch_weather "New York" --json
 ```
 
 ## API Keys and Configuration
