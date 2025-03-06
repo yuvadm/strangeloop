@@ -39,14 +39,7 @@ strangeloop --help
 strangeloop hello
 strangeloop greet [NAME]
 strangeloop info
-strangeloop info --verbose
-strangeloop process FILE_PATH [--output OUTPUT_PATH]
 strangeloop ask "What is the meaning of life?" --max-tokens 2048 --temperature 0.8
-```
-
-You can also run the CLI directly from the source:
-```bash
-uvx run strangeloop --help
 ```
 
 ## Environment Variables
