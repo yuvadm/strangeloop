@@ -92,4 +92,3 @@ strangeloop config path
 ### Common Configuration Options
 
 - `anthropic_api_key`: Your Anthropic API key
-- `model`: The Claude model to use (default: "claude-3-sonnet-20240229")
