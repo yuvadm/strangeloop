@@ -32,10 +32,10 @@ uvx strangeloop process FILE_PATH [--output OUTPUT_PATH]
 uvx strangeloop ask "What is recursive self-improvement in AI?"
 
 # Configuration management
-uvx strangeloop config set api_key "your-api-key"
-uvx strangeloop config get api_key
+uvx strangeloop config set anthropic_api_key "your-api-key"
+uvx strangeloop config get anthropic_api_key
 uvx strangeloop config list
-uvx strangeloop config delete api_key
+uvx strangeloop config delete anthropic_api_key
 uvx strangeloop config path
 ```
 
@@ -49,11 +49,19 @@ strangeloop info
 strangeloop ask "What is the meaning of life?" --max-tokens 2048 --temperature 0.8
 ```
 
-## Environment Variables
+## API Keys and Configuration
 
-The following environment variables are required:
+To use the Claude Sonnet 3.7 integration, you need to provide your Anthropic API key in one of these ways (in order of precedence):
 
-- `ANTHROPIC_API_KEY`: Your Anthropic API key for accessing Claude Sonnet 3.7
+1. Set in configuration:
+   ```bash
+   strangeloop config set anthropic_api_key "your-api-key"
+   ```
+
+2. Set as environment variable:
+   ```bash
+   export ANTHROPIC_API_KEY="your-api-key"
+   ```
 
 ## Configuration
 
@@ -79,3 +87,9 @@ strangeloop config delete model
 
 # Show the configuration file path
 strangeloop config path
+```
+
+### Common Configuration Options
+
+- `anthropic_api_key`: Your Anthropic API key
+- `model`: The Claude model to use (default: "claude-3-sonnet-20240229")

@@ -6,22 +6,31 @@ import os
 import requests
 import json
 from typing import Dict, Any, Optional
+from .config import get_config
 
 
 class ClaudeClient:
     """Client for interacting with Anthropic's Claude API."""
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "claude-3-sonnet-20240229"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "claude-3-7-sonnet-20250219"):
         """
         Initialize the Claude client.
         
         Args:
-            api_key: Anthropic API key. If None, will try to get from ANTHROPIC_API_KEY env var.
+            api_key: Anthropic API key. If None, will try to get from config, then ANTHROPIC_API_KEY env var.
             model: The Claude model to use. Defaults to Claude Sonnet 3.7.
         """
+        # Try to get API key from different sources in order of priority:
+        # 1. Directly provided api_key parameter
+        # 2. Configuration file
+        # 3. Environment variable
+        if api_key is None:
+            config = get_config()
+            api_key = config.get("anthropic_api_key")
+            
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
-            raise ValueError("Anthropic API key must be provided or set as ANTHROPIC_API_KEY environment variable")
+            raise ValueError("Anthropic API key must be provided, set in configuration with 'config set anthropic_api_key YOUR_KEY', or set as ANTHROPIC_API_KEY environment variable")
         
         self.model = model
         self.api_url = "https://api.anthropic.com/v1/messages"
