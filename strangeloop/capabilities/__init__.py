@@ -6,3 +6,5 @@ This package contains functions that have been dynamically added at runtime.
 from strangeloop.capabilities.generate_secure_password import generate_secure_password
 
 from strangeloop.capabilities.get_public_ip_address import get_public_ip_address
+
+from strangeloop.capabilities.fetch_current_bitcoin_price import fetch_current_bitcoin_price
