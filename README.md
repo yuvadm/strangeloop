@@ -21,24 +21,36 @@ $ uv run strangeloop
 Strangeloop provides a command-line interface with several commands:
 
 ```bash
-# Display help
-strangeloop --help
+# Run the CLI ad hoc without installation
+uvx strangeloop --help
+uvx strangeloop hello
+uvx strangeloop greet [NAME]
+uvx strangeloop info
+uvx strangeloop process FILE_PATH [--output OUTPUT_PATH]
 
-# Print a hello message
-strangeloop hello
-
-# Greet a user
-strangeloop greet [NAME]
-
-# Display information about the environment
-strangeloop info
-strangeloop info --verbose
-
-# Process a file
-strangeloop process FILE_PATH [--output OUTPUT_PATH]
+# Ask Claude Sonnet 3.7 a question
+uvx strangeloop ask "What is recursive self-improvement in AI?"
 ```
 
-You can also run the CLI directly without installation:
-
+If you've installed the package:
 ```bash
-python main.py --help
+# Using the installed CLI
+strangeloop --help
+strangeloop hello
+strangeloop greet [NAME]
+strangeloop info
+strangeloop info --verbose
+strangeloop process FILE_PATH [--output OUTPUT_PATH]
+strangeloop ask "What is the meaning of life?" --max-tokens 2048 --temperature 0.8
+```
+
+You can also run the CLI directly from the source:
+```bash
+uvx run strangeloop --help
+```
+
+## Environment Variables
+
+The following environment variables are required:
+
+- `ANTHROPIC_API_KEY`: Your Anthropic API key for accessing Claude Sonnet 3.7

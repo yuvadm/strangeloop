@@ -5,6 +5,7 @@ Strangeloop CLI - A recursive and self-referential AI agent framework.
 import click
 import sys
 from pathlib import Path
+from .llm import ask_claude
 
 
 @click.group()
@@ -56,6 +57,22 @@ def process(file_path, output):
     
     if output:
         click.echo(f"Results written to: {output}")
+
+
+@cli.command()
+@click.argument("question", required=True)
+@click.option("--max-tokens", "-m", default=1024, help="Maximum tokens in response")
+@click.option("--temperature", "-t", default=0.7, type=float, help="Temperature (0.0-1.0)")
+def ask(question, max_tokens, temperature):
+    """Ask Claude Sonnet 3.7 a question and get a response."""
+    try:
+        click.echo("Asking Claude Sonnet 3.7...")
+        response = ask_claude(question, max_tokens, temperature)
+        click.echo("\nResponse:")
+        click.echo(response)
+    except Exception as e:
+        click.echo(f"Error: {str(e)}", err=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
