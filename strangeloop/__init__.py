@@ -2,4 +2,9 @@
 Strangeloop - A recursive and self-referential AI agent framework.
 """
 
-__version__ = "0.1.0"
+from importlib.metadata import version
+
+try:
+    __version__ = version("strangeloop")
+except Exception:
+    pass
