@@ -4,8 +4,10 @@ Strangeloop CLI - A recursive and self-referential AI agent framework.
 """
 import click
 import sys
+import json
 from pathlib import Path
 from .llm import ask_claude
+from .config import get_config
 
 
 @click.group()
@@ -72,6 +74,94 @@ def ask(question, max_tokens, temperature):
         click.echo(response)
     except Exception as e:
         click.echo(f"Error: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@cli.group()
+def config():
+    """Manage Strangeloop configuration."""
+    pass
+
+
+@config.command(name="set")
+@click.argument("key", required=True)
+@click.argument("value", required=True)
+def config_set(key, value):
+    """Set a configuration value."""
+    try:
+        # Try to parse as JSON if possible
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            # If not valid JSON, use as string
+            pass
+        
+        config = get_config()
+        config.set(key, value)
+        click.echo(f"Configuration '{key}' set to: {value}")
+    except Exception as e:
+        click.echo(f"Error setting configuration: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@config.command(name="get")
+@click.argument("key", required=True)
+def config_get(key):
+    """Get a configuration value."""
+    try:
+        config = get_config()
+        value = config.get(key)
+        if value is None:
+            click.echo(f"Configuration '{key}' is not set")
+        else:
+            if isinstance(value, (dict, list)):
+                click.echo(json.dumps(value, indent=2))
+            else:
+                click.echo(value)
+    except Exception as e:
+        click.echo(f"Error getting configuration: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@config.command(name="list")
+def config_list():
+    """List all configuration values."""
+    try:
+        config = get_config()
+        values = config.list_all()
+        if not values:
+            click.echo("No configuration values set")
+        else:
+            click.echo(json.dumps(values, indent=2))
+    except Exception as e:
+        click.echo(f"Error listing configuration: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@config.command(name="delete")
+@click.argument("key", required=True)
+def config_delete(key):
+    """Delete a configuration value."""
+    try:
+        config = get_config()
+        if config.delete(key):
+            click.echo(f"Configuration '{key}' deleted")
+        else:
+            click.echo(f"Configuration '{key}' not found")
+    except Exception as e:
+        click.echo(f"Error deleting configuration: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@config.command(name="path")
+def config_path():
+    """Show the configuration file path."""
+    try:
+        config = get_config()
+        click.echo(f"Configuration directory: {config.config_dir}")
+        click.echo(f"Configuration file: {config.config_file}")
+    except Exception as e:
+        click.echo(f"Error getting configuration path: {str(e)}", err=True)
         sys.exit(1)
 
 
