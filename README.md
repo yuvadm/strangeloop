@@ -22,31 +22,31 @@ Strangeloop provides a command-line interface with several commands:
 
 ```bash
 # Run the CLI ad hoc without installation
-uvx strangeloop --help
-uvx strangeloop hello
-uvx strangeloop greet [NAME]
-uvx strangeloop info
-uvx strangeloop process FILE_PATH [--output OUTPUT_PATH]
+strangeloop --help
+strangeloop hello
+strangeloop greet [NAME]
+strangeloop info
+strangeloop process FILE_PATH [--output OUTPUT_PATH]
 
 # Ask Claude Sonnet 3.7 a question
-uvx strangeloop ask "What is recursive self-improvement in AI?"
+strangeloop ask "What is recursive self-improvement in AI?"
 
 # Use the AI agent loop to fulfill requests
-uvx strangeloop do "find the current weather in New York"
-uvx strangeloop do "create a function to generate secure passwords"
+strangeloop do "find the current weather in New York"
+strangeloop do "create a function to generate secure passwords"
 
 # Manage capabilities
-uvx strangeloop capability add "generate a secure random password"
-uvx strangeloop capability list
-uvx strangeloop capability show generate_secure_password
-uvx strangeloop capability run generate_secure_password 16 --include-special-chars
+strangeloop capability add "generate a secure random password"
+strangeloop capability list
+strangeloop capability show generate_secure_password
+strangeloop capability run generate_secure_password 16 --include-special-chars
 
 # Configuration management
-uvx strangeloop config set anthropic_api_key "your-api-key"
-uvx strangeloop config get anthropic_api_key
-uvx strangeloop config list
-uvx strangeloop config delete anthropic_api_key
-uvx strangeloop config path
+strangeloop config set anthropic_api_key "your-api-key"
+strangeloop config get anthropic_api_key
+strangeloop config list
+strangeloop config delete anthropic_api_key
+strangeloop config path
 ```
 
 If you've installed the package:
